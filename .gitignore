@@ -1,0 +1,35 @@
+# Ambiente Virtual
+# Nunca envie a pasta do ambiente virtual, pois ela contém bibliotecas
+# que podem ser diferentes em cada máquina.
+venv/
+.venv/
+
+# Arquivos de cache do Python
+# São gerados automaticamente pelo Python e não precisam ser versionados.
+__pycache__/
+*.pyc
+
+# Banco de Dados SQLite
+# O arquivo do banco de dados será modificado constantemente durante o
+# desenvolvimento e cada desenvolvedor deve ter o seu.
+*.db
+*.sqlite3
+
+# Arquivos de configuração de IDEs/Editores
+# Configurações específicas do seu ambiente de desenvolvimento.
+.vscode/
+.idea/
+
+# Arquivos gerados por testes
+# Cache e relatórios de ferramentas como o pytest.
+.pytest_cache/
+.coverage
+
+# Arquivos de variáveis de ambiente
+# Caso você use um arquivo .env para guardar segredos, ele NUNCA deve
+# ser enviado para o repositório.
+.env
+.env.test
+
+# Pytest cache
+.pytest_cache/
