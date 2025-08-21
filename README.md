@@ -166,18 +166,25 @@ pytest tests/test_user_service.py -v
 ```
 
 **Cobertura Atual dos Testes:**
-- ✅ **UserService**: Testes unitários completos com mocks (83% cobertura)
-- ✅ **Rotas da API**: Endpoints testados com TestClient (50% cobertura)
-- ✅ **Autenticação**: Sistema de auth testado (43% cobertura)
-- ✅ **Validação**: Schemas e validações testados (100% cobertura)
-- ✅ **Cobertura Total**: **64%** com pytest-cov configurado
+- ✅ **UserService**: Testes unitários completos com mocks
+- ✅ **SQLiteUserRepository**: Testes de persistência com mocks
+- ✅ **Autenticação**: Sistema JWT e hash de senhas testado
+- ✅ **Configuração**: Validação de variáveis de ambiente
+- ✅ **Validação**: Schemas e validações testados
+- ✅ **Rotas da API**: Endpoints testados com TestClient
 
 **Estrutura de Testes:**
 - **`tests/test_user_service.py`**: Testes unitários da camada de serviço
+- **`tests/test_sqlite_repository.py`**: Testes do repositório de dados
+- **`tests/test_auth.py`**: Testes de autenticação e JWT
+- **`tests/test_config.py`**: Testes de configuração
 - **`tests/test_api_endpoints.py`**: Testes de integração dos endpoints da API
 
 **Tipos de Testes Implementados:**
 - **Testes Unitários**: `tests/test_user_service.py` - Testa a lógica de negócio isoladamente
+- **Testes de Repositório**: `tests/test_sqlite_repository.py` - Testa a camada de persistência
+- **Testes de Autenticação**: `tests/test_auth.py` - Testa JWT, hash de senhas e validação de tokens
+- **Testes de Configuração**: `tests/test_config.py` - Testa carregamento de variáveis de ambiente
 - **Testes de API**: `tests/test_api_endpoints.py` - Testa os endpoints com TestClient
 - **Mocks**: Uso de `unittest.mock` para isolamento de dependências
 - **Fixtures**: Reutilização de dados de teste entre diferentes testes
