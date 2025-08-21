@@ -10,11 +10,7 @@ from src.infrastructure.web import schemas
 from src.infrastructure.web.dependencies import get_db
 from src.core.services.user_service import UserService
 from src.infrastructure.database.sqlite_user_repository import SQLiteUserRepository
-
-# --- Configurações de Segurança ---
-SECRET_KEY = "your-super-secret-key"  # Em produção, use uma variável de ambiente!
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+from src.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
 # --- Contexto para Hashing de Senhas ---
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
