@@ -63,14 +63,17 @@ source venv/bin/activate
 # Copie o arquivo de exemplo
 cp .env.example .env
 
-# Edite o arquivo .env com suas configurações
+# Edite o arquivo .env com suas configurações (opcional)
 nano .env  # ou use seu editor preferido
 ```
 
-**Configurações obrigatórias no .env:**
-- `SECRET_KEY`: Chave secreta para JWT (mude para produção!)
-- `DATABASE_URL`: URL do banco de dados
-- `ACCESS_TOKEN_EXPIRE_MINUTES`: Tempo de expiração do token
+**Configurações no .env:**
+- **`SECRET_KEY`**: Chave secreta para JWT (obrigatória para produção)
+- **`ACCESS_TOKEN_EXPIRE_MINUTES`**: Tempo de expiração do token (padrão: 30 min)
+- **`DATABASE_URL`**: URL do banco de dados (padrão: SQLite local)
+- **`ALGORITHM`**: Algoritmo de criptografia JWT (padrão: HS256)
+
+**Nota:** O projeto funcionará com os valores padrão, mas é **altamente recomendado** configurar uma `SECRET_KEY` única em produção.
 
 ### 5. Instale as Dependências
 
@@ -104,10 +107,12 @@ O servidor estará disponível em: **<http://127.0.0.1:8000>**
 
 1. **Crie um usuário** → `POST /users/` (com `username`, `email` e `password`)  
 2. **Autentique-se** → Clique em *Authorize* no Swagger e insira:  
-   - `username`: seu email  
+   - `email`: seu email (não username)  
    - `password`: sua senha  
    - Deixe `client_id` e `client_secret` em branco  
 3. **Acesse rotas protegidas** → Endpoints como `GET /users/me` ou `PUT /users/{user_id}` estarão liberados com o token gerado.
+
+**Nota:** O sistema usa **email** (não username) para autenticação, conforme implementado na API.
 
 ### Exemplos de Uso com cURL
 
@@ -128,6 +133,8 @@ curl -X POST "http://127.0.0.1:8000/token" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "email=teste@exemplo.com&password=senha123"
 ```
+
+**Nota:** O endpoint `/token` espera `email` e `password` como form data, não JSON.
 
 **3. Acessar rota protegida:**
 ```bash
@@ -165,11 +172,15 @@ pytest tests/test_user_service.py -v
 - ✅ **Validação**: Schemas e validações testados (100% cobertura)
 - ✅ **Cobertura Total**: **64%** com pytest-cov configurado
 
+**Estrutura de Testes:**
+- **`tests/test_user_service.py`**: Testes unitários da camada de serviço
+- **`tests/test_api_endpoints.py`**: Testes de integração dos endpoints da API
+
 **Tipos de Testes Implementados:**
-- **Testes Unitários**: `tests/test_user_service.py`
-- **Testes de API**: `tests/test_api_endpoints.py`
-- **Mocks**: Uso de `unittest.mock` para isolamento
-- **Fixtures**: Reutilização de dados de teste
+- **Testes Unitários**: `tests/test_user_service.py` - Testa a lógica de negócio isoladamente
+- **Testes de API**: `tests/test_api_endpoints.py` - Testa os endpoints com TestClient
+- **Mocks**: Uso de `unittest.mock` para isolamento de dependências
+- **Fixtures**: Reutilização de dados de teste entre diferentes testes
 
 ---
 
@@ -180,20 +191,47 @@ pytest tests/test_user_service.py -v
 ```
 fastapi-user-manager/
 ├── src/
-│   ├── core/           # Lógica de negócio e modelos
-│   │   ├── models.py   # Modelos de dados
-│   │   ├── ports/      # Interfaces (contratos)
-│   │   └── services/   # Serviços de negócio
-│   ├── infrastructure/ # Implementações concretas
-│   │   ├── database/   # Repositórios e banco
-│   │   └── web/        # Controllers e schemas
-│   ├── config.py       # Configurações
-│   └── main.py         # Ponto de entrada
-├── tests/              # Testes automatizados
-├── requirements.txt    # Dependências Python
-├── pytest.ini         # Configuração do pytest
-└── .env.example       # Exemplo de variáveis de ambiente
+│   ├── core/                    # Lógica de negócio (domínio)
+│   │   ├── models.py           # Modelos de domínio (Pydantic)
+│   │   ├── ports/              # Interfaces (contratos)
+│   │   │   └── user_repository.py
+│   │   └── services/           # Serviços de negócio
+│   │       └── user_service.py
+│   ├── infrastructure/          # Implementações concretas
+│   │   ├── database/           # Camada de persistência
+│   │   │   ├── models.py       # Modelos SQLAlchemy
+│   │   │   ├── database.py     # Configuração do banco
+│   │   │   └── sqlite_user_repository.py
+│   │   └── web/                # Camada de apresentação
+│   │       ├── api.py          # Controllers/rotas
+│   │       ├── auth.py         # Autenticação JWT
+│   │       ├── schemas.py      # Validação de entrada/saída
+│   │       └── dependencies.py # Injeção de dependências
+│   ├── config.py               # Configurações e variáveis de ambiente
+│   └── main.py                 # Ponto de entrada da aplicação
+├── tests/                      # Testes automatizados
+│   ├── test_user_service.py   # Testes unitários
+│   └── test_api_endpoints.py  # Testes de integração
+├── requirements.txt            # Dependências Python
+├── pytest.ini                 # Configuração do pytest
+└── .env.example               # Exemplo de variáveis de ambiente
 ```
+
+### Arquitetura e Separação de Responsabilidades
+
+**Core (Domínio):**
+- **`models.py`**: Entidades de negócio (User) usando Pydantic
+- **`ports/`**: Interfaces que definem contratos (UserRepository)
+- **`services/`**: Lógica de negócio (UserService)
+
+**Infrastructure (Implementação):**
+- **`database/`**: Persistência de dados com SQLAlchemy
+- **`web/`**: API REST com FastAPI, autenticação e validação
+
+**Schemas vs Models:**
+- **`core/models.py`**: Modelos de domínio para lógica de negócio
+- **`infrastructure/web/schemas.py`**: Schemas para validação de entrada/saída da API
+- **`infrastructure/database/models.py`**: Modelos SQLAlchemy para persistência
 
 ### Adicionando Novos Testes
 
@@ -208,8 +246,12 @@ Para adicionar novos testes:
 
 - **Arquitetura Hexagonal**: Separação clara entre domínio e infraestrutura
 - **Dependency Injection**: Uso de `Depends()` para injeção de dependências
-- **Validação**: Schemas Pydantic para entrada/saída
+- **Validação**: Schemas Pydantic para entrada/saída da API
 - **Tratamento de Erros**: HTTP status codes apropriados
+- **Separação de Modelos**: 
+  - Modelos de domínio (core) para lógica de negócio
+  - Schemas (web) para validação de API
+  - Modelos de persistência (database) para SQLAlchemy
 
 ---
 
@@ -240,6 +282,7 @@ cat .env
 - Verifique se `SECRET_KEY` está configurada no .env
 - Certifique-se de que o token não expirou
 - Use o endpoint `/token` para obter um novo token
+- **IMPORTANTE**: Use **email** (não username) para autenticação
 
 **4. Porta já em uso:**
 ```bash
