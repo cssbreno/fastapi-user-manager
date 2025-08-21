@@ -8,6 +8,10 @@ venv/
 # São gerados automaticamente pelo Python e não precisam ser versionados.
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.so
+*.dll
 
 # Banco de Dados SQLite
 # O arquivo do banco de dados será modificado constantemente durante o
@@ -32,6 +36,10 @@ coverage.xml
 *.cover
 .hypothesis/
 
+# Arquivos de log
+*.log
+*.log.*
+
 # Arquivos de variáveis de ambiente
 # Caso você use um arquivo .env para guardar segredos, ele NUNCA deve
 # ser enviado para o repositório.
@@ -39,3 +47,9 @@ coverage.xml
 .env.test
 .env.local
 .env.production
+
+# Arquivos temporários do sistema
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
