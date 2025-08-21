@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Form
+from pydantic import EmailStr  # Boa prática para validar o email recebido
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -27,11 +28,19 @@ def get_user_service(db: Session = Depends(get_db)) -> UserService:
 # --- Rotas de Autenticação ---
 @router.post("/token", response_model=schemas.Token, tags=["Authentication"])
 def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
+    # Substituímos o Depends() por parâmetros de formulário explícitos
+    email: EmailStr = Form(..., description="O e-mail do usuário para login."),
+    password: str = Form(..., description="A senha do usuário."),
     service: UserService = Depends(get_user_service),
 ):
-    user = service.get_user_by_email(form_data.username)  # email é o username no form
-    if not user or not verify_password(form_data.password, user.hashed_password):
+    """
+    Autentica o usuário e retorna um token de acesso.
+
+    Use o seu **e-mail** e **senha** para obter o token JWT.
+    """
+    # Agora usamos a variável 'email' diretamente
+    user = service.get_user_by_email(email)
+    if not user or not verify_password(password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
