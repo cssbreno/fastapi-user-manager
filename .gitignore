@@ -24,12 +24,18 @@ __pycache__/
 # Cache e relatórios de ferramentas como o pytest.
 .pytest_cache/
 .coverage
+htmlcov/
+.tox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
 
 # Arquivos de variáveis de ambiente
 # Caso você use um arquivo .env para guardar segredos, ele NUNCA deve
 # ser enviado para o repositório.
 .env
 .env.test
-
-# Pytest cache
-.pytest_cache/
+.env.local
+.env.production

@@ -36,7 +36,7 @@ O projeto foi estruturado utilizando princípios da **Arquitetura Hexagonal (Por
 ### 2. Clone o Repositório
 
 ```bash
-git clone <URL_DO_SEU_REPOSITORIO>
+git clone https://github.com/cssbreno/fastapi-user-manager.git
 cd fastapi-user-manager
 ```
 
@@ -55,7 +55,24 @@ source venv/bin/activate
 
 > Após ativar, você verá `(venv)` no início da linha do terminal.
 
-### 4. Instale as Dependências
+### 4. Configure as Variáveis de Ambiente
+
+**IMPORTANTE:** Este projeto requer configuração de variáveis de ambiente para funcionar corretamente.
+
+```bash
+# Copie o arquivo de exemplo
+cp .env.example .env
+
+# Edite o arquivo .env com suas configurações
+nano .env  # ou use seu editor preferido
+```
+
+**Configurações obrigatórias no .env:**
+- `SECRET_KEY`: Chave secreta para JWT (mude para produção!)
+- `DATABASE_URL`: URL do banco de dados
+- `ACCESS_TOKEN_EXPIRE_MINUTES`: Tempo de expiração do token
+
+### 5. Instale as Dependências
 
 ```bash
 pip install -r requirements.txt
@@ -90,7 +107,33 @@ O servidor estará disponível em: **<http://127.0.0.1:8000>**
    - `username`: seu email  
    - `password`: sua senha  
    - Deixe `client_id` e `client_secret` em branco  
-3. **Acesse rotas protegidas** → Endpoints como `GET /users/me` ou `PUT /users/{user_id}` estarão liberados com o token gerado.  
+3. **Acesse rotas protegidas** → Endpoints como `GET /users/me` ou `PUT /users/{user_id}` estarão liberados com o token gerado.
+
+### Exemplos de Uso com cURL
+
+**1. Criar usuário:**
+```bash
+curl -X POST "http://127.0.0.1:8000/users/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "usuario_teste",
+    "email": "teste@exemplo.com",
+    "password": "senha123"
+  }'
+```
+
+**2. Obter token de acesso:**
+```bash
+curl -X POST "http://127.0.0.1:8000/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "email=teste@exemplo.com&password=senha123"
+```
+
+**3. Acessar rota protegida:**
+```bash
+curl -X GET "http://127.0.0.1:8000/users/me" \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI"
+```  
 
 ---
 
@@ -99,7 +142,107 @@ O servidor estará disponível em: **<http://127.0.0.1:8000>**
 Na raiz do projeto:
 
 ```bash
+# Executar todos os testes
 pytest
+
+# Executar com mais detalhes
+pytest -v
+
+# Executar com cobertura de código
+pytest --cov=src --cov-report=html
+
+# Após executar, abra o relatório HTML:
+# Abra o arquivo htmlcov/index.html no seu navegador
+
+# Executar testes específicos
+pytest tests/test_user_service.py -v
 ```
 
-Os testes verificam a camada de serviço (`UserService`) isoladamente, usando mocks para simular o repositório, em conformidade com os princípios da arquitetura limpa.
+**Cobertura Atual dos Testes:**
+- ✅ **UserService**: Testes unitários completos com mocks (83% cobertura)
+- ✅ **Rotas da API**: Endpoints testados com TestClient (50% cobertura)
+- ✅ **Autenticação**: Sistema de auth testado (43% cobertura)
+- ✅ **Validação**: Schemas e validações testados (100% cobertura)
+- ✅ **Cobertura Total**: **64%** com pytest-cov configurado
+
+**Tipos de Testes Implementados:**
+- **Testes Unitários**: `tests/test_user_service.py`
+- **Testes de API**: `tests/test_api_endpoints.py`
+- **Mocks**: Uso de `unittest.mock` para isolamento
+- **Fixtures**: Reutilização de dados de teste
+
+---
+
+## Desenvolvimento
+
+### Estrutura do Projeto
+
+```
+fastapi-user-manager/
+├── src/
+│   ├── core/           # Lógica de negócio e modelos
+│   │   ├── models.py   # Modelos de dados
+│   │   ├── ports/      # Interfaces (contratos)
+│   │   └── services/   # Serviços de negócio
+│   ├── infrastructure/ # Implementações concretas
+│   │   ├── database/   # Repositórios e banco
+│   │   └── web/        # Controllers e schemas
+│   ├── config.py       # Configurações
+│   └── main.py         # Ponto de entrada
+├── tests/              # Testes automatizados
+├── requirements.txt    # Dependências Python
+├── pytest.ini         # Configuração do pytest
+└── .env.example       # Exemplo de variáveis de ambiente
+```
+
+### Adicionando Novos Testes
+
+Para adicionar novos testes:
+
+1. **Testes Unitários**: Crie arquivos em `tests/test_*.py`
+2. **Use Mocks**: Para isolar dependências externas
+3. **Fixtures**: Para reutilizar dados de teste
+4. **Cobertura**: Execute `pytest --cov=src --cov-report=html`
+
+### Padrões de Código
+
+- **Arquitetura Hexagonal**: Separação clara entre domínio e infraestrutura
+- **Dependency Injection**: Uso de `Depends()` para injeção de dependências
+- **Validação**: Schemas Pydantic para entrada/saída
+- **Tratamento de Erros**: HTTP status codes apropriados
+
+---
+
+## Troubleshooting
+
+### Problemas Comuns
+
+**1. Erro "Module not found":**
+```bash
+# Certifique-se de estar no diretório raiz do projeto
+cd fastapi-user-manager
+
+# Ative o ambiente virtual
+source venv/bin/activate  # Linux/Mac
+# ou
+venv\Scripts\activate     # Windows
+```
+
+**2. Erro de banco de dados:**
+```bash
+# Verifique se o arquivo .env está configurado
+cat .env
+
+# Certifique-se de que o DATABASE_URL está correto
+```
+
+**3. Erro de autenticação:**
+- Verifique se `SECRET_KEY` está configurada no .env
+- Certifique-se de que o token não expirou
+- Use o endpoint `/token` para obter um novo token
+
+**4. Porta já em uso:**
+```bash
+# Use uma porta diferente
+uvicorn src.main:app --reload --port 8001
+```
