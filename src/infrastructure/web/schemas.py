@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional
 
 # Schemas para a API (validação de entrada e saída)
@@ -21,8 +21,8 @@ class UserUpdate(BaseModel):
 class UserResponse(UserBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    # ✅ SOLUÇÃO: ConfigDict moderno para Pydantic V2
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Token(BaseModel):

@@ -22,16 +22,39 @@ class TestUserService(unittest.TestCase):
         }
         expected_user = User(id=1, **user_data)
 
+        # Configura o mock para retornar None quando verificar se usuário existe
+        self.mock_repo.get_by_email.return_value = None
         # Configura o mock para retornar o usuário esperado quando 'add' for chamado
         self.mock_repo.add.return_value = expected_user
 
         # Chama o método do serviço
         created_user = self.user_service.create_user(user_data)
 
+        # Verifica se o método 'get_by_email' foi chamado para verificar duplicação
+        self.mock_repo.get_by_email.assert_called_once_with("test@example.com")
         # Verifica se o método 'add' do repositório foi chamado com os dados corretos
         self.mock_repo.add.assert_called_once_with(user_data)
         # Verifica se o usuário retornado é o esperado
         self.assertEqual(created_user, expected_user)
+
+    def test_create_user_duplicate_email(self):
+        """Testa se o serviço rejeita usuários com email duplicado"""
+        user_data = {
+            "username": "testuser",
+            "email": "test@example.com",
+            "hashed_password": "hashed_password",
+        }
+        
+        # Configura o mock para retornar um usuário existente
+        existing_user = User(id=1, **user_data)
+        self.mock_repo.get_by_email.return_value = existing_user
+
+        # Verifica se a exceção é lançada
+        with self.assertRaises(Exception) as context:
+            self.user_service.create_user(user_data)
+        
+        # Verifica se a exceção é do tipo correto
+        self.assertIn("já existe", str(context.exception))
 
     def test_get_user_by_id(self):
         user_id = 1

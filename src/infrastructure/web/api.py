@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Form
 from pydantic import EmailStr  # Boa prática para validar o email recebido
 from sqlalchemy.orm import Session
 from typing import List
 
 from src.core.services.user_service import UserService
+from src.core.exceptions import UserAlreadyExistsError, UserNotFoundError
 from src.infrastructure.database.sqlite_user_repository import SQLiteUserRepository
 from src.infrastructure.web import schemas
 from src.infrastructure.web.dependencies import get_db
@@ -14,6 +14,9 @@ from src.infrastructure.web.auth import (
     verify_password,
     get_password_hash,
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Criação do roteador da API
 router = APIRouter()
@@ -41,11 +44,14 @@ def login_for_access_token(
     # Agora usamos a variável 'email' diretamente
     user = service.get_user_by_email(email)
     if not user or not verify_password(password, user.hashed_password):
+        logger.warning(f"Tentativa de login falhou para email: {email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+    logger.info(f"Login bem-sucedido para email: {email}")
     access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -60,14 +66,14 @@ def login_for_access_token(
 def create_user(
     user: schemas.UserCreate, service: UserService = Depends(get_user_service)
 ):
-    db_user = service.get_user_by_email(user.email)
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-
-    user_data = user.model_dump()
-    user_data["hashed_password"] = get_password_hash(user_data.pop("password"))
-
-    return service.create_user(user_data)
+    try:
+        user_data = user.model_dump()
+        user_data["hashed_password"] = get_password_hash(user_data.pop("password"))
+        
+        return service.create_user(user_data)
+    except UserAlreadyExistsError as e:
+        logger.warning(f"Tentativa de criar usuário duplicado: {user.email}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/users/", response_model=List[schemas.UserResponse], tags=["Users"])
@@ -82,6 +88,7 @@ def read_users(
     Recupera uma lista paginada de usuários.
     """
     users = service.get_all_users(skip=skip, limit=limit)
+    logger.debug(f"Listando usuários: {len(users)} encontrados")
     return users
 
 
@@ -97,10 +104,14 @@ def read_users_me(
 
 @router.get("/users/{user_id}", response_model=schemas.UserResponse, tags=["Users"])
 def read_user(user_id: int, service: UserService = Depends(get_user_service)):
-    db_user = service.get_user_by_id(user_id)
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return db_user
+    try:
+        db_user = service.get_user_by_id(user_id)
+        if db_user is None:
+            raise UserNotFoundError(f"Usuário com ID {user_id} não encontrado")
+        return db_user
+    except UserNotFoundError as e:
+        logger.warning(f"Tentativa de acessar usuário inexistente: {user_id}")
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.put("/users/{user_id}", response_model=schemas.UserResponse, tags=["Users"])
@@ -111,6 +122,7 @@ def update_user(
     current_user: schemas.UserResponse = Depends(get_current_active_user),
 ):
     if current_user.id != user_id:
+        logger.warning(f"Usuário {current_user.id} tentou atualizar usuário {user_id}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to update this user",
@@ -120,10 +132,12 @@ def update_user(
     if not user_data:
         raise HTTPException(status_code=400, detail="No data to update")
 
-    updated_user = service.update_user(user_id, user_data)
-    if updated_user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return updated_user
+    try:
+        updated_user = service.update_user(user_id, user_data)
+        return updated_user
+    except UserNotFoundError as e:
+        logger.warning(f"Tentativa de atualizar usuário inexistente: {user_id}")
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.delete(
@@ -135,11 +149,17 @@ def delete_user(
     current_user: schemas.UserResponse = Depends(get_current_active_user),
 ):
     if current_user.id != user_id:
+        logger.warning(f"Usuário {current_user.id} tentou deletar usuário {user_id}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to delete this user",
         )
 
-    if not service.delete_user(user_id):
-        raise HTTPException(status_code=404, detail="User not found")
-    return None
+    try:
+        if not service.delete_user(user_id):
+            raise UserNotFoundError(f"Usuário com ID {user_id} não encontrado")
+        logger.info(f"Usuário {user_id} deletado com sucesso")
+        return None
+    except UserNotFoundError as e:
+        logger.warning(f"Tentativa de deletar usuário inexistente: {user_id}")
+        raise HTTPException(status_code=404, detail=str(e))
