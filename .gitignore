@@ -53,3 +53,6 @@ coverage.xml
 Thumbs.db
 *.tmp
 *.temp
+
+#arquivo de estrutura do projeto
+arvore_do_projeto.txt
