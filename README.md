@@ -63,6 +63,19 @@ source venv/bin/activate
 # Copie o arquivo de exemplo
 cp .env.example .env
 
+# Gere uma chave secreta única
+# Python (recomendado, pois já é um pré-requisito)
+python -c "import secrets; print(secrets.token_hex(32))"
+
+# Ou use o comando abaixo para gerar uma chave secreta única
+# Windows:
+powershell -Command "openssl rand -hex 32"
+# Linux/Mac:
+openssl rand -hex 32
+
+# Copie a chave secreta gerada para o arquivo .env
+echo "SECRET_KEY=sua_chave_secreta_aqui" >> .env
+
 # Edite o arquivo .env com suas configurações (opcional)
 nano .env  # ou use seu editor preferido
 ```
@@ -73,6 +86,15 @@ nano .env  # ou use seu editor preferido
 - **`ACCESS_TOKEN_EXPIRE_MINUTES`**: Tempo de expiração do token (padrão: 30 min)
 - **`DATABASE_URL`**: URL do banco de dados (padrão: SQLite local)
 - **`ALGORITHM`**: Algoritmo de criptografia JWT (padrão: HS256)
+
+**Exemplo de .env preenchido:**
+
+```bash
+SECRET_KEY=sua_chave_secreta_gerada_aqui_com_64_caracteres
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+DATABASE_URL=sqlite:///./database.db
+ALGORITHM=HS256
+```
 
 **Nota:** O projeto funcionará com os valores padrão, mas é **altamente recomendado** configurar uma `SECRET_KEY` única em produção.
 
