@@ -106,12 +106,13 @@ O servidor estará disponível em: **<http://127.0.0.1:8000>**
 
 ### Fluxo de Uso Básico
 
-1. **Crie um usuário** → `POST /users/` (com `username`, `email` e `password`)  
-2. **Autentique-se** → Clique em *Authorize* no Swagger e insira:  
+1. **Crie um usuário** → `POST /users/` (com `username`, `email` e `password`)
+2. **Crie um token de acesso** → `POST /token` (com `email` e `password`)
+3. **Autentique-se** → Clique em *Authorize* no Swagger e insira:  
    - `email`: seu email (não username)  
    - `password`: sua senha  
    - Deixe `client_id` e `client_secret` em branco  
-3. **Acesse rotas protegidas** → Endpoints como `GET /users/me` ou `PUT /users/{user_id}` estarão liberados com o token gerado.
+4. **Acesse rotas protegidas** → Endpoints como `GET /users/me` ou `PUT /users/{user_id}` estarão liberados com o token gerado.
 
 **Nota:** O sistema usa **email** (não username) para autenticação, conforme implementado na API.
 
