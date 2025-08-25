@@ -68,6 +68,7 @@ nano .env  # ou use seu editor preferido
 ```
 
 **Configurações no .env:**
+
 - **`SECRET_KEY`**: Chave secreta para JWT (obrigatória para produção)
 - **`ACCESS_TOKEN_EXPIRE_MINUTES`**: Tempo de expiração do token (padrão: 30 min)
 - **`DATABASE_URL`**: URL do banco de dados (padrão: SQLite local)
@@ -114,9 +115,10 @@ O servidor estará disponível em: **<http://127.0.0.1:8000>**
 
 **Nota:** O sistema usa **email** (não username) para autenticação, conforme implementado na API.
 
-### Exemplos de Uso com cURL
+### Exemplos de Uso com cURL (Postman)
 
 **1. Criar usuário:**
+
 ```bash
 curl -X POST "http://127.0.0.1:8000/users/" \
   -H "Content-Type: application/json" \
@@ -128,19 +130,48 @@ curl -X POST "http://127.0.0.1:8000/users/" \
 ```
 
 **2. Obter token de acesso:**
+
 ```bash
 curl -X POST "http://127.0.0.1:8000/token" \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "email=teste@exemplo.com&password=senha123"
+  -d "username=teste@exemplo.com&password=senha123"
 ```
 
 **Nota:** O endpoint `/token` espera `email` e `password` como form data, não JSON.
 
 **3. Acessar rota protegida:**
+
 ```bash
 curl -X GET "http://127.0.0.1:8000/users/me" \
   -H "Authorization: Bearer SEU_TOKEN_AQUI"
 ```  
+
+**4. Listar usuários:**
+
+```bash
+curl -X GET "http://127.0.0.1:8000/users/" \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI"
+```
+
+**5. Atualizar usuário:**
+
+```bash
+curl -X PUT "http://127.0.0.1:8000/users/1" \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "usuario_teste_atualizado",
+    "email": "teste@exemplo.com",
+    "password": "senha123"
+  }'
+```
+
+**6. Deletar usuário:**
+
+```bash
+curl -X DELETE "http://127.0.0.1:8000/users/1" \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI"
+```
 
 ---
 
@@ -166,6 +197,7 @@ pytest tests/test_user_service.py -v
 ```
 
 **Cobertura Atual dos Testes:**
+
 - ✅ **UserService**: Testes unitários completos com mocks
 - ✅ **SQLiteUserRepository**: Testes de persistência com mocks
 - ✅ **Autenticação**: Sistema JWT e hash de senhas testado
@@ -174,6 +206,7 @@ pytest tests/test_user_service.py -v
 - ✅ **Rotas da API**: Endpoints testados com TestClient
 
 **Estrutura de Testes:**
+
 - **`tests/test_user_service.py`**: Testes unitários da camada de serviço
 - **`tests/test_sqlite_repository.py`**: Testes do repositório de dados
 - **`tests/test_auth.py`**: Testes de autenticação e JWT
@@ -181,6 +214,7 @@ pytest tests/test_user_service.py -v
 - **`tests/test_api_endpoints.py`**: Testes de integração dos endpoints da API
 
 **Tipos de Testes Implementados:**
+
 - **Testes Unitários**: `tests/test_user_service.py` - Testa a lógica de negócio isoladamente
 - **Testes de Repositório**: `tests/test_sqlite_repository.py` - Testa a camada de persistência
 - **Testes de Autenticação**: `tests/test_auth.py` - Testa JWT, hash de senhas e validação de tokens
@@ -227,15 +261,18 @@ fastapi-user-manager/
 ### Arquitetura e Separação de Responsabilidades
 
 **Core (Domínio):**
+
 - **`models.py`**: Entidades de negócio (User) usando Pydantic
 - **`ports/`**: Interfaces que definem contratos (UserRepository)
 - **`services/`**: Lógica de negócio (UserService)
 
 **Infrastructure (Implementação):**
+
 - **`database/`**: Persistência de dados com SQLAlchemy
 - **`web/`**: API REST com FastAPI, autenticação e validação
 
 **Schemas vs Models:**
+
 - **`core/models.py`**: Modelos de domínio para lógica de negócio
 - **`infrastructure/web/schemas.py`**: Schemas para validação de entrada/saída da API
 - **`infrastructure/database/models.py`**: Modelos SQLAlchemy para persistência
@@ -255,7 +292,7 @@ Para adicionar novos testes:
 - **Dependency Injection**: Uso de `Depends()` para injeção de dependências
 - **Validação**: Schemas Pydantic para entrada/saída da API
 - **Tratamento de Erros**: HTTP status codes apropriados
-- **Separação de Modelos**: 
+- **Separação de Modelos**:
   - Modelos de domínio (core) para lógica de negócio
   - Schemas (web) para validação de API
   - Modelos de persistência (database) para SQLAlchemy
@@ -267,6 +304,7 @@ Para adicionar novos testes:
 ### Problemas Comuns
 
 **1. Erro "Module not found":**
+
 ```bash
 # Certifique-se de estar no diretório raiz do projeto
 cd fastapi-user-manager
@@ -278,6 +316,7 @@ venv\Scripts\activate     # Windows
 ```
 
 **2. Erro de banco de dados:**
+
 ```bash
 # Verifique se o arquivo .env está configurado
 cat .env
@@ -286,12 +325,14 @@ cat .env
 ```
 
 **3. Erro de autenticação:**
+
 - Verifique se `SECRET_KEY` está configurada no .env
 - Certifique-se de que o token não expirou
 - Use o endpoint `/token` para obter um novo token
 - **IMPORTANTE**: Use **email** (não username) para autenticação
 
 **4. Porta já em uso:**
+
 ```bash
 # Use uma porta diferente
 uvicorn src.main:app --reload --port 8001
